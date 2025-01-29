@@ -1,0 +1,6 @@
+uint64 timestamp
+uint32 image_width
+uint32 image_height
+uint32 crop_width
+uint32 crop_height
+uint64 elapsed_time_ms
