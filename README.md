@@ -4,12 +4,16 @@ This project implements a flatbuffers-to-ROS message conversion bridge for detec
 
 ## Getting Started
 
+Add this package to your ROS2 workspace (e.g. as a submodule) in the `src` directory.
+
 ### Build the node
 
+From the workspace root directory:
 `colcon build --packages-select cv_detector_ros2_bridge`
 
 ### Run the node
 
+From the workspace root directory:
 `ros2 run cv_detector_ros2_bridge detections_ros2_bridge`
 
 ### Build Dependencies

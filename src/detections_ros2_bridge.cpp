@@ -15,6 +15,7 @@
 #include <chrono>
 #include <memory>
 #include <thread>
+#include <stdexcept>
 #include <boost/asio.hpp>
 
 #include "flatbuffers/flatbuffers.h"
@@ -34,9 +35,14 @@ using namespace std::chrono_literals;
 class DetectionBridge : public rclcpp::Node {
 public:
 
-    DetectionBridge()
-        : Node("cv_detector_ros2_bridge")
+    static const std::string kDefaultHost;
+    static const std::string kDefaultPort;
+
+    DetectionBridge() : Node("cv_detector_ros2_bridge")
     {
+        this->declare_parameter("host", kDefaultHost);
+        this->declare_parameter("port", kDefaultPort);
+
         publisher_ = this->create_publisher<cv_detector_ros2_bridge::msg::DetectionsList>(
             "detections_list", 10);
     }
@@ -46,28 +52,52 @@ public:
         publisher_->publish(message);
     }
 
-
 private:
 
     rclcpp::Publisher<cv_detector_ros2_bridge::msg::DetectionsList>::SharedPtr publisher_;
 };
 
+const std::string DetectionBridge::kDefaultHost = "127.0.0.1";
+const std::string DetectionBridge::kDefaultPort = "5050";
+
+
 int main(int argc, char * argv[])
 {
     rclcpp::init(argc, argv);
 
-    boost::asio::io_context io_context;
-
     sync_queue<message::ptr> queue;
+    auto bridge_node = std::make_shared<DetectionBridge>();
 
+    boost::asio::io_context io_context;
     boost::asio::ip::tcp::resolver resolver(io_context);
-    auto endpoints = resolver.resolve(argv[1], argv[2]);
+
+    std::string host = DetectionBridge::kDefaultHost;
+    try
+    {
+        rclcpp::Parameter host_param = bridge_node->get_parameter("host");
+        host = host_param.get_value<std::string>();
+    }
+    catch (const std::runtime_error& error)
+    {
+        RCLCPP_WARN(bridge_node->get_logger(), "Defaulting to host='%s'", host.c_str());
+    }
+
+    std::string port = DetectionBridge::kDefaultPort;
+    try
+    {
+        rclcpp::Parameter port_param = bridge_node->get_parameter("port");
+        port = port_param.get_value<std::string>();
+    }
+    catch (const std::runtime_error& error)
+    {
+        RCLCPP_WARN(bridge_node->get_logger(), "Defaulting to port='%s'", port.c_str());
+    }
+
+    auto endpoints = resolver.resolve(host, port);
 
     detections_list_client client(io_context, endpoints, queue);
 
     std::thread t([&io_context](){ io_context.run(); });
-
-    auto bridge_node = std::make_shared<DetectionBridge>();
 
     while (true)
     {
