@@ -24,11 +24,17 @@ namespace convert {
  * Convert a flatbuffers detection list to a ROS detection list.
  * @param input flatbuffers detections list
  * @param output ROS detections list
+ * @param class_filter if the detection class is in this string of strings,
+ *                     it will be included in the output
+ *                     (emptry string disables filtering)
+ * @param sort_by_conf If true, the highest confidence detection will be returned first
  * @return void
  */
 void detections_list(
     const gst_opencv_detector::DetectionList* input,
-    cv_detector_ros2_bridge::msg::DetectionsList& output);
+    cv_detector_ros2_bridge::msg::DetectionsList& output,
+    const std::string& class_filter = "",
+    bool sort_by_conf = true);
 
 }
 

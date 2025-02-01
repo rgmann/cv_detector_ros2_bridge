@@ -42,6 +42,8 @@ public:
     {
         this->declare_parameter("host", kDefaultHost);
         this->declare_parameter("port", kDefaultPort);
+        this->declare_parameter("class-filter", "");
+        this->declare_parameter("sort-by-confidence", true);
 
         publisher_ = this->create_publisher<cv_detector_ros2_bridge::msg::DetectionsList>(
             "detections_list", 10);
@@ -93,6 +95,32 @@ int main(int argc, char * argv[])
         RCLCPP_WARN(bridge_node->get_logger(), "Defaulting to port='%s'", port.c_str());
     }
 
+    std::string class_filter;
+    try
+    {
+        rclcpp::Parameter class_filter_param = bridge_node->get_parameter("class-filter");
+        class_filter = class_filter_param.get_value<std::string>();
+    }
+    catch (const std::runtime_error& error)
+    {
+        RCLCPP_WARN(bridge_node->get_logger(),
+            "Defaulting to class-filter='%s'",
+            class_filter.c_str());
+    }
+
+    bool sort_by_conf = true;
+    try
+    {
+        rclcpp::Parameter sort_param = bridge_node->get_parameter("sort-by-confidence");
+        sort_by_conf = sort_param.get_value<bool>();
+    }
+    catch (const std::runtime_error& error)
+    {
+        RCLCPP_WARN(bridge_node->get_logger(),
+            "Defaulting to sort-by-confidence='%s'",
+            sort_by_conf ? "true" : "false");
+    }
+
     auto endpoints = resolver.resolve(host, port);
 
     detections_list_client client(io_context, endpoints, queue);
@@ -114,11 +142,18 @@ int main(int argc, char * argv[])
                     flatbuffers::GetRoot<gst_opencv_detector::DetectionList>(msg->body());
 
                 msg::DetectionsList ros_detections_list;
-                convert::detections_list(fb_detection_list, ros_detections_list);
+                convert::detections_list(
+                    fb_detection_list,
+                    ros_detections_list,
+                    class_filter,
+                    sort_by_conf
+                );
 
                 bridge_node->publish_detection_list(ros_detections_list);
             }
         }
+
+        rclcpp::spin_some(bridge_node);
     }
 
     client.close();
