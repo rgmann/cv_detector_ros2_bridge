@@ -8,13 +8,29 @@ Add this package to your ROS2 workspace (e.g. as a submodule) in the `src` direc
 
 ### Build the node
 
-From the workspace root directory:
+From the workspace root directory:  
 `colcon build --packages-select cv_detector_ros2_bridge`
 
 ### Run the node
 
-From the workspace root directory:
+From the workspace root directory:  
 `ros2 run cv_detector_ros2_bridge detections_ros2_bridge`
+
+## Parameters
+
+This node supports the following parameters.
+
+`host`  
+The IP address or hostname of the gst_opencv_detector server instance. The node defaults to assuming that the server is running locally so `host="127.0.0.1"`.
+
+`port`  
+The port number for the gst_opencv_detector server instance. The port defaults to `port="5050"`.
+
+`class-filter`  
+A string specifying the detection class names that should be forwarded by the bridge node. Filtering is disabled by specifying an empty string (default behavior). The parameter is treated as a string of strings, so if you wish to permit multiple class to be forwarded, specify something like `"person|dog"` or `"person,dog"`. The seperator is immaterial.
+
+`sort-by-confidence`  
+If true (default), the detections in the output list will be sort by decreasing confidence.
 
 ### Build Dependencies
 

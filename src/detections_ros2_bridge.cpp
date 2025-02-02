@@ -35,15 +35,20 @@ using namespace std::chrono_literals;
 class DetectionBridge : public rclcpp::Node {
 public:
 
+    static const std::string kParamKeyHost;
+    static const std::string kParamKeyPort;
+    static const std::string kParamKeyClassFilter;
+    static const std::string kParamKeySortByConfidence;
+
     static const std::string kDefaultHost;
     static const std::string kDefaultPort;
 
     DetectionBridge() : Node("cv_detector_ros2_bridge")
     {
-        this->declare_parameter("host", kDefaultHost);
-        this->declare_parameter("port", kDefaultPort);
-        this->declare_parameter("class-filter", "");
-        this->declare_parameter("sort-by-confidence", true);
+        this->declare_parameter(kParamKeyHost, kDefaultHost);
+        this->declare_parameter(kParamKeyPort, kDefaultPort);
+        this->declare_parameter(kParamKeyClassFilter, "");
+        this->declare_parameter(kParamKeySortByConfidence, true);
 
         publisher_ = this->create_publisher<cv_detector_ros2_bridge::msg::DetectionsList>(
             "detections_list", 10);
@@ -58,6 +63,11 @@ private:
 
     rclcpp::Publisher<cv_detector_ros2_bridge::msg::DetectionsList>::SharedPtr publisher_;
 };
+
+const std::string DetectionBridge::kParamKeyHost = "host";
+const std::string DetectionBridge::kParamKeyPort = "port";
+const std::string DetectionBridge::kParamKeyClassFilter = "class-filter";
+const std::string DetectionBridge::kParamKeySortByConfidence = "sort-by-confidence";
 
 const std::string DetectionBridge::kDefaultHost = "127.0.0.1";
 const std::string DetectionBridge::kDefaultPort = "5050";
@@ -76,12 +86,16 @@ int main(int argc, char * argv[])
     std::string host = DetectionBridge::kDefaultHost;
     try
     {
-        rclcpp::Parameter host_param = bridge_node->get_parameter("host");
+        rclcpp::Parameter host_param = bridge_node->get_parameter(
+            DetectionBridge::kParamKeyHost);
         host = host_param.get_value<std::string>();
     }
     catch (const std::runtime_error& error)
     {
-        RCLCPP_WARN(bridge_node->get_logger(), "Defaulting to host='%s'", host.c_str());
+        RCLCPP_WARN(bridge_node->get_logger(),
+            "Defaulting to %s='%s'",
+            DetectionBridge::kParamKeyHost.c_str(),
+            host.c_str());
     }
 
     std::string port = DetectionBridge::kDefaultPort;
@@ -92,32 +106,39 @@ int main(int argc, char * argv[])
     }
     catch (const std::runtime_error& error)
     {
-        RCLCPP_WARN(bridge_node->get_logger(), "Defaulting to port='%s'", port.c_str());
+        RCLCPP_WARN(bridge_node->get_logger(), 
+            "Defaulting to %s='%s'",
+            DetectionBridge::kParamKeyPort.c_str(),
+            port.c_str());
     }
 
     std::string class_filter;
     try
     {
-        rclcpp::Parameter class_filter_param = bridge_node->get_parameter("class-filter");
+        rclcpp::Parameter class_filter_param = bridge_node->get_parameter(
+            DetectionBridge::kParamKeyClassFilter);
         class_filter = class_filter_param.get_value<std::string>();
     }
     catch (const std::runtime_error& error)
     {
         RCLCPP_WARN(bridge_node->get_logger(),
-            "Defaulting to class-filter='%s'",
+            "Defaulting to %s='%s'",
+            DetectionBridge::kParamKeyClassFilter.c_str(),
             class_filter.c_str());
     }
 
     bool sort_by_conf = true;
     try
     {
-        rclcpp::Parameter sort_param = bridge_node->get_parameter("sort-by-confidence");
+        rclcpp::Parameter sort_param = bridge_node->get_parameter(
+            DetectionBridge::kParamKeySortByConfidence);
         sort_by_conf = sort_param.get_value<bool>();
     }
     catch (const std::runtime_error& error)
     {
         RCLCPP_WARN(bridge_node->get_logger(),
-            "Defaulting to sort-by-confidence='%s'",
+            "Defaulting to %s='%s'",
+            DetectionBridge::kParamKeySortByConfidence.c_str(),
             sort_by_conf ? "true" : "false");
     }
 
